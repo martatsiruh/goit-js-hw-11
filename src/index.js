@@ -1,5 +1,6 @@
 import './sass/main.scss';
 import Notiflix from 'notiflix';
+
 import renderCard from './templase/markup.hbs';
 
 import { apiServer } from './js/apiServer.js'
@@ -11,6 +12,11 @@ import getRefs from './js/get-refs';
 
 const refs = getRefs();
 const ApiServer = new apiServer();
+
+Notiflix.Notify.init({
+    useIcon: false,
+    cssAnimationStyle: 'from-right',
+});
 
 refs.searchForm.addEventListener('submit', onFormSubmit);
 

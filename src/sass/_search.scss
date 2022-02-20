@@ -7,6 +7,7 @@ body {
 
 
 .search-form {
+  transform: translate(-50%, -50%);
   position: fixed;
   z-index: 999;
   display: flex;
@@ -15,7 +16,6 @@ body {
   align-content: center;
   justify-content: center;
   /*width: 500px;*/
-  transform: translate(-50%,-50%);
 }
 
 .search-input, .btn {
@@ -25,6 +25,7 @@ body {
   box-sizing: border-box;
   transition: .5s;
 }
+
 .search-input {
   background-color: #fff;
   width: 340px;
@@ -33,7 +34,6 @@ body {
   outline: none;
   padding: 0 25px;
   border-radius: 25px 0 0 25px;
-
 }
 
 .btn {
