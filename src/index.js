@@ -1,54 +1,100 @@
 import './sass/main.scss';
-import Notiflix from 'notiflix';
 
-import renderCard from './templase/markup.hbs';
-
-import { apiServer } from './js/apiServer.js'
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+let galleryLightBox;
 
 import getRefs from './js/get-refs';
-
 const refs = getRefs();
-const ApiServer = new apiServer();
 
-Notiflix.Notify.init({
+import photoCardsMarkup from './templase/markup.hbs';
+import ApiService from './js/apiServer';
+
+Notify.init({
     useIcon: false,
     cssAnimationStyle: 'from-right',
 });
 
+const apiService = new ApiService();
+
+const observerOptions = {
+    rootMargin: '150px',
+};
+
+const observer = new IntersectionObserver(onScroll, observerOptions);
+observer.observe(refs.galleryElem);
+
 refs.searchForm.addEventListener('submit', onFormSubmit);
 
-function onFormSubmit(event) {
-    event.preventDefault();
-    ApiServer.serchQuery = event.currentTarget.elements.searchQuery.value;
+async function onFormSubmit(event) {
+    try {
+        event.preventDefault();
 
-    if (ApiServer.serchQuery === '') {
-        Notiflix.Notify.failure('Please, enter text!!!')
-        return;
-    };
+        apiService.searchQuery = event.currentTarget.elements.searchQuery.value.trim();
+        apiService.resetPage();
+        if (apiService.searchQuery === '') return;
 
-    ApiServer.resetPage();
+        const images = await apiService.fetchAxios();
+        const { hits, totalHits } = images;
 
-    ApiServer.fetchAxios()
-    .then(response => {
+        if (hits.length !== 0) {
+            Notify.success(`Hooray! We found ${totalHits} images.`);
+            refs.galleryElem.style.display = 'block';
+        }
 
+        renderImageMarkup(hits);
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
+async function onScroll(entries) {
+    entries.forEach(async entry => {
         try {
-            const hits = response.data.hits;
-            if (hits.length === 0) {
-                Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.")
+            if (entry.isIntersecting && apiService.searchQuery !== '') {
+            const images = await apiService.fetchAxios();
+            const { hits, totalHits } = images;
+            const maxPage = totalHits / 40;
+
+            renderImageCardMarkup();
+            smoothScroll();
+
+            if (apiService.page - 1 > maxPage) {
+                Notify.info("We're sorry, but you've reached the end of search results.");
+                refs.galleryElem.style.display = 'none';
             }
-    
-        renderCardMarkup(hits);
-
+        }
         } catch (error) {
-            console.log(error);
-            Notiflix.Notify.failure('Error, something went wrong');
-        }})
-    .finally(refs.searchForm.reset());
+            console.log(error.message);
+        }
+    });
+}
 
-    clearPage();
+function renderImageCardMarkup(hits) {
+    refs.galleryList.insertAdjacentHTML('beforeend', photoCardsMarkup(hits));
+    galleryLightBox.refresh();
+}
+
+function renderImageMarkup(images) {
+    if (images.length === 0) {
+        clearPage();
+        Notify.failure('Sorry, there are no images matching your search query. Please try again.');
+        return;
+    }
+
+    refs.galleryList.innerHTML = photoCardsMarkup(images);
+
+   //galleryLightBox
+    galleryLightBox = new SimpleLightbox('.gallery-list a', {
+        captionDelay: 250,
+        captionSelector: "img", 
+        captionPosition: "bottom", 
+        showCounter: false, 
+        scrollZoom: false,
+        overlayOpacity: 0.2,
+    });
 
 }
 
@@ -56,39 +102,14 @@ function clearPage() {
     refs.galleryList.innerHTML = '';
 }
 
-function renderCardMarkup(response) {
-    refs.galleryList.insertAdjacentHTML('beforeend', renderCard(response));
-    lightbox.refresh();
-}
+//Прокрутка страницы
+function smoothScroll() {
+    const { height: cardHeight } = document
+        .querySelector('.gallery-list')
+        .firstElementChild.getBoundingClientRect();
 
-
-const onEntry = entries => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting && ApiServer.serchQuery !== '') {
-            ApiServer.fetchAxios().then(response => {
-                const hits = response.data.hits
-                renderCardMarkup(hits);
-            })
-        }
+    window.scrollBy({
+        top: cardHeight * 2,
+        behavior: 'smooth',
     });
 }
-
-
-const options = {
-    rootMargin: '200px'
-}
-
-
-const observer = new IntersectionObserver(onEntry, options)
-
-observer.observe(refs.galleryElem);
-
-const lightbox = new SimpleLightbox(".galleryList a", {
-    captionSelector: "img", 
-    captionPosition: "bottom", 
-    captionDelay: 250, 
-    showCounter: false, 
-    scrollZoom: false,
-});
-
-
