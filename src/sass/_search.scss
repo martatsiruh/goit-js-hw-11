@@ -29,7 +29,7 @@ body {
   padding-top: 10px;
   padding-bottom: 10px;
   position: fixed;
-
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%), 0 1px 1px rgb(0 0 0 / 14%), 0 2px 1px rgb(0 0 0 / 20%);
 }
 
 
@@ -44,7 +44,7 @@ body {
 }
 
 .search-form input {
-  border-radius: 4px 0 0 4px;
+  //border-radius: 4px 0 0 4px;
   border: none;
   outline: none;
 
@@ -59,7 +59,8 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 2.5em;
+  //width: 3.5em;
+  min-width: 8.5%;
   border: none;
   background-color: #ffc107;
   color: #fff;
